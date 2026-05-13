@@ -717,12 +717,17 @@
 
       ctx.fillStyle = '#000000';
       ctx.textBaseline = 'top';
+
+      const conceptionText = data.conceptionDate;
+
       ctx.font = 'bold 38px Arial';
       ctx.fillText(data.lastName, 90, 520);
+
       ctx.font = 'bold 34px Arial';
-      ctx.fillText(data.firstName || 'UNNAMED', 90, 650);
-      ctx.font = 'bold 34px Arial';
-      ctx.fillText(data.conceptionDate, 90, 810);
+      ctx.fillText(conceptionText, 90, 810);
+
+      ctx.font = '32px Arial';
+      ctx.fillText(issueDate, 90, 1085);
 
       const cardData = canvas.toDataURL('image/jpeg', 0.95);
 
