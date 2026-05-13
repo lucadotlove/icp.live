@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>International Conception Passport</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <meta name="description" content="International Conception Passport — Extending the rights and opportunities of unborn lives." />
   <style>
     :root {
@@ -513,7 +514,7 @@
         <div class="section-title">
           <div class="eyebrow">Registration</div>
           <h2>Register now your unborn baby.</h2>
-          <p class="lead">Submit a preliminary registration request for an International Conception Passport. A future version of this page may connect to a secure registry and payment system.</p>
+          <p class="lead">Submit a preliminary registration request for an International Conception Passport. After submitting the form, you can instantly create and download a formal welcome letter containing your personalized International Conception Passport card.</p>
         </div>
         <div class="register-box">
           <h3>Preliminary Registration Form</h3>
@@ -527,26 +528,17 @@
               <label for="lastName">Last Name *</label>
               <input id="lastName" name="lastName" type="text" autocomplete="family-name" required />
             </div>
-            <div class="form-row">
-              <div>
-                <label for="conceptionType">Conception date format *</label>
-                <select id="conceptionType" name="conceptionType" required>
-                  <option value="specific date">Specific date</option>
-                  <option value="month only">Month only</option>
-                </select>
-              </div>
-              <div>
-                <label for="conceptionDate">Date or month of conception *</label>
-                <input id="conceptionDate" name="conceptionDate" type="text" placeholder="e.g. 14 January 2024 or January 2024" required />
-              </div>
+            <div>
+              <label for="conceptionDate">Date or month of conception *</label>
+              <input id="conceptionDate" name="conceptionDate" type="text" placeholder="e.g. 14 January 2024 or January 2024" required />
             </div>
             <div>
               <label for="birthDate">Estimated date of birth</label>
               <input id="birthDate" name="birthDate" type="date" />
             </div>
-            <button class="button" type="submit">Submit registration request</button>
+            <button class="button" type="submit">Create and download passport</button>
           </form>
-          <div id="confirmation" class="confirmation" role="status">Registration request received. This demo form does not yet send data anywhere.</div>
+          <div id="confirmation" class="confirmation" role="status">Your welcome letter and personalized International Conception Passport PDF has been created and downloaded.</div>
         </div>
       </div>
     </section>
@@ -581,11 +573,160 @@
     const form = document.getElementById('registrationForm');
     const confirmation = document.getElementById('confirmation');
 
-    form.addEventListener('submit', function(event) {
+    function todayLong() {
+      return new Date().toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
+    }
+
+    function formatBirthDate(value) {
+      if (!value) return 'Not indicated';
+      const date = new Date(value + 'T00:00:00');
+      return date.toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      });
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    async function createPassportImage(data) {
+      const img = await loadImage('id.jpeg');
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      ctx.fillStyle = '#111111';
+      ctx.textBaseline = 'top';
+
+      ctx.font = '700 58px Arial, Helvetica, sans-serif';
+      ctx.fillText(data.lastName, 58, 430);
+
+      if (data.firstName) {
+        ctx.font = '400 30px Arial, Helvetica, sans-serif';
+        ctx.fillText('NAME', 58, 505);
+        ctx.font = '700 44px Arial, Helvetica, sans-serif';
+        ctx.fillText(data.firstName, 58, 548);
+      }
+
+      ctx.font = '700 58px Arial, Helvetica, sans-serif';
+      ctx.fillText(data.conceptionDate, 58, 645);
+
+      ctx.font = '400 44px Arial, Helvetica, sans-serif';
+      ctx.fillText(todayLong(), 58, 810);
+
+      return canvas.toDataURL('image/jpeg', 0.94);
+    }
+
+    async function generateWelcomePdf(data) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const issueDate = todayLong();
+      const passportImage = await createPassportImage(data);
+
+      doc.setProperties({
+        title: 'International Conception Passport Welcome Letter',
+        subject: 'Registration confirmation',
+        author: 'International Conception Passport Registry'
+      });
+
+      doc.setFillColor(0, 47, 94);
+      doc.rect(0, 0, 210, 24, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(14);
+      doc.text('INTERNATIONAL CONCEPTION PASSPORT REGISTRY', 15, 15);
+
+      doc.setTextColor(20, 20, 20);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(22);
+      doc.text('Welcome Letter and Registration Record', 15, 42);
+
+      doc.setDrawColor(0, 63, 125);
+      doc.setLineWidth(0.8);
+      doc.line(15, 48, 195, 48);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(70, 78, 90);
+      doc.text('Date of issue: ' + issueDate, 15, 58);
+      doc.text('Registry reference: ICP-' + Date.now().toString().slice(-8), 15, 65);
+
+      doc.setTextColor(20, 20, 20);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text('To the family of ' + data.displayName + ',', 15, 82);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11.2);
+      const paragraph1 = 'With this letter, the International Conception Passport Registry acknowledges the preliminary registration of an unborn child for the creation of an International Conception Passport.';
+      const paragraph2 = 'The purpose of this document is to affirm, in a solemn and dignified form, that unborn life deserves recognition, care, and respect. The International Conception Passport is a symbolic record of presence, continuity, and belonging: a way for families to mark the beginning of a human story before birth.';
+      const paragraph3 = 'This welcome letter and the accompanying card image may be kept as a family record and as a visible expression of the principle that every life, including life not yet born, carries dignity and meaning.';
+      doc.text(doc.splitTextToSize(paragraph1, 180), 15, 94);
+      doc.text(doc.splitTextToSize(paragraph2, 180), 15, 112);
+      doc.text(doc.splitTextToSize(paragraph3, 180), 15, 142);
+
+      doc.setFillColor(247, 249, 252);
+      doc.setDrawColor(216, 222, 232);
+      doc.rect(15, 166, 180, 32, 'FD');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(0, 63, 125);
+      doc.text('REGISTRATION DETAILS', 22, 178);
+      doc.setTextColor(20, 20, 20);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10.5);
+      doc.text('Name: ' + (data.firstName || 'Not indicated'), 22, 187);
+      doc.text('Last name: ' + data.lastName, 92, 187);
+      doc.text('Date or month of conception: ' + data.conceptionDate, 22, 194);
+      doc.text('Estimated date of birth: ' + formatBirthDate(data.birthDate), 92, 194);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.setTextColor(0, 63, 125);
+      doc.text('PERSONALIZED INTERNATIONAL CONCEPTION PASSPORT CARD', 15, 216);
+      doc.addImage(passportImage, 'JPEG', 15, 224, 180, 110.4);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(95, 103, 115);
+      doc.text('Important notice: The International Conception Passport is a symbolic recognition document. It is not an official state passport, legal identity card, birth certificate, travel document, or medical record.', 15, 280, { maxWidth: 180 });
+
+      const safeName = data.lastName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      doc.save('international-conception-passport-' + safeName + '.pdf');
+    }
+
+    form.addEventListener('submit', async function(event) {
       event.preventDefault();
-      confirmation.style.display = 'block';
-      form.reset();
-      confirmation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      const data = {
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        conceptionDate: document.getElementById('conceptionDate').value.trim(),
+        birthDate: document.getElementById('birthDate').value
+      };
+
+      data.displayName = data.firstName ? data.firstName + ' ' + data.lastName : data.lastName;
+
+      if (!data.lastName || !data.conceptionDate) return;
+
+      try {
+        await generateWelcomePdf(data);
+        confirmation.style.display = 'block';
+        form.reset();
+        confirmation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch (error) {
+        alert('The PDF could not be created. Please try again.');
+        console.error(error);
+      }
     });
   </script>
 </body>
