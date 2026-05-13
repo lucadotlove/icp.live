@@ -581,7 +581,7 @@
 
     function formatDate(dateString) {
       if (!dateString) return 'Not provided';
-      const date = new Date(dateString);
+      const date = new Date(dateString + 'T00:00:00');
       return date.toLocaleDateString('en-GB', {
         day: 'numeric',
         month: 'long',
@@ -589,40 +589,28 @@
       });
     }
 
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
     async function generatePDF(data) {
       const { jsPDF } = window.jspdf;
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
       const navy = [0, 47, 94];
-      const lightBlue = [230, 238, 248];
+      const blueLine = [0, 63, 125];
+      const palePanel = [246, 249, 253];
+      const panelBorder = [164, 190, 224];
+      const dark = [18, 24, 34];
 
-      pdf.setFillColor(...navy);
-      pdf.rect(0, 0, 210, 26, 'F');
-
-      pdf.setTextColor(255,255,255);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(22);
-      pdf.text('INTERNATIONAL CONCEPTION PASSPORT REGISTRY', 18, 14);
-
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('RECOGNIZING LIFE. AFFIRMING DIGNITY. CONNECTING HUMANITY.', 18, 20);
-
-      pdf.setTextColor(15,15,15);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(26);
-      pdf.text('Welcome Letter and Registration Record', 18, 42);
-
-      pdf.setDrawColor(...navy);
-      pdf.setLineWidth(0.7);
-      pdf.line(18, 46, 192, 46);
-
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(11);
+      const pageW = 210;
+      const margin = 18;
+      const contentW = pageW - margin * 2;
 
       const today = new Date();
       const issueDate = today.toLocaleDateString('en-GB', {
@@ -630,109 +618,132 @@
         month: 'long',
         year: 'numeric'
       });
-
       const registryId = 'ICP-' + Math.floor(10000000 + Math.random() * 90000000);
 
-      pdf.text(`Date of issue: ${issueDate}`, 18, 58);
-      pdf.text(`Registry reference: ${registryId}`, 18, 66);
+      pdf.setFillColor(...navy);
+      pdf.rect(0, 0, pageW, 25, 'F');
 
+      pdf.setTextColor(255, 255, 255);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(15);
-      pdf.setTextColor(...navy);
-      pdf.text(`To the family of ${data.firstName || ''} ${data.lastName},`, 18, 84);
-
-      pdf.setTextColor(25,25,25);
+      pdf.text('INTERNATIONAL CONCEPTION PASSPORT REGISTRY', margin, 11.5);
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(12);
+      pdf.setFontSize(7.5);
+      pdf.text('RECOGNIZING LIFE. AFFIRMING DIGNITY. CONNECTING HUMANITY.', margin, 18);
+
+      pdf.setTextColor(...dark);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(22);
+      pdf.text('Welcome Letter and Registration Record', margin, 39);
+      pdf.setDrawColor(...blueLine);
+      pdf.setLineWidth(0.7);
+      pdf.line(margin, 43, pageW - margin, 43);
+
+      pdf.setTextColor(55, 63, 76);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10);
+      pdf.text(`Date of issue: ${issueDate}`, margin, 54);
+      pdf.text(`Registry reference: ${registryId}`, margin, 61);
+
+      pdf.setTextColor(...navy);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(13);
+      const familyName = `${data.firstName || ''} ${data.lastName}`.trim();
+      pdf.text(`To the family of ${familyName},`, margin, 76);
+
+      pdf.setTextColor(25, 25, 25);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(10.3);
+      pdf.setLineHeightFactor(1.2);
 
       const paragraph1 = 'With this letter, the International Conception Passport Registry acknowledges the preliminary registration of an unborn child for the creation of an International Conception Passport.';
-
       const paragraph2 = 'The purpose of this document is to affirm, in a solemn and dignified form, that unborn life deserves recognition, care, and respect. The International Conception Passport is a symbolic record of presence, continuity, and belonging: a way for families to mark the beginning of a human story before birth.';
-
       const paragraph3 = 'This welcome letter and the accompanying card image may be kept as a family record and as a visible expression of the principle that every life, including life not yet born, carries dignity and meaning.';
 
-      pdf.text(pdf.splitTextToSize(paragraph1, 170), 18, 98);
-      pdf.text(pdf.splitTextToSize(paragraph2, 170), 18, 122);
-      pdf.text(pdf.splitTextToSize(paragraph3, 170), 18, 152);
+      pdf.text(pdf.splitTextToSize(paragraph1, contentW), margin, 87);
+      pdf.text(pdf.splitTextToSize(paragraph2, contentW), margin, 106);
+      pdf.text(pdf.splitTextToSize(paragraph3, contentW), margin, 133);
 
-      pdf.setFillColor(...lightBlue);
-      pdf.setDrawColor(160, 183, 219);
-      pdf.roundedRect(18, 176, 174, 38, 2, 2, 'FD');
-
-      pdf.setTextColor(...navy);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(15);
-      pdf.text('REGISTRATION DETAILS', 28, 190);
-
-      pdf.setLineWidth(0.3);
-      pdf.line(28, 194, 186, 194);
-
-      pdf.setTextColor(20,20,20);
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-
-      pdf.text(`Name:`, 28, 205);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${data.firstName || '—'}`, 48, 205);
-
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Last name:`, 110, 205);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${data.lastName}`, 136, 205);
-
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Date of conception:`, 28, 214);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${data.conceptionDate}`, 78, 214);
-
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Estimated date of birth:`, 110, 214);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${formatDate(data.birthDate)}`, 165, 214, { align: 'right' });
+      pdf.setFillColor(...palePanel);
+      pdf.setDrawColor(...panelBorder);
+      pdf.setLineWidth(0.35);
+      pdf.roundedRect(margin, 154, contentW, 42, 2, 2, 'FD');
 
       pdf.setTextColor(...navy);
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(15);
-      pdf.text('PERSONALIZED INTERNATIONAL CONCEPTION PASSPORT CARD', 105, 232, { align: 'center' });
+      pdf.setFontSize(12.5);
+      pdf.text('REGISTRATION DETAILS', margin + 8, 166);
+      pdf.setDrawColor(...panelBorder);
+      pdf.line(margin + 8, 171, pageW - margin - 8, 171);
 
-      const img = new Image();
-      img.src = 'id.jpeg';
+      pdf.setTextColor(25, 25, 25);
+      pdf.setFontSize(10.2);
 
-      await new Promise((resolve) => {
-        img.onload = resolve;
-      });
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Name:', margin + 8, 181);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(data.firstName || '—', margin + 25, 181);
 
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Last name:', margin + 92, 181);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(data.lastName, margin + 117, 181);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Date of conception:', margin + 8, 190);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(data.conceptionDate, margin + 50, 190);
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Estimated date of birth:', margin + 92, 190);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(formatDate(data.birthDate), pageW - margin - 8, 190, { align: 'right' });
+
+      pdf.setTextColor(...navy);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(12.5);
+      pdf.text('PERSONALIZED INTERNATIONAL CONCEPTION PASSPORT CARD', pageW / 2, 211, { align: 'center' });
+      pdf.setDrawColor(...blueLine);
+      pdf.line(54, 216, 97, 216);
+      pdf.line(113, 216, 156, 216);
+      pdf.circle(105, 216, 2.2, 'S');
+
+      const img = await loadImage('id.jpeg');
       const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
       const ctx = canvas.getContext('2d');
-
       ctx.drawImage(img, 0, 0);
 
       ctx.fillStyle = '#000000';
+      ctx.textBaseline = 'top';
       ctx.font = 'bold 38px Arial';
       ctx.fillText(data.lastName, 90, 520);
-
       ctx.font = 'bold 34px Arial';
       ctx.fillText(data.firstName || 'UNNAMED', 90, 650);
-
       ctx.font = 'bold 34px Arial';
       ctx.fillText(data.conceptionDate, 90, 810);
 
-      const cardData = canvas.toDataURL('image/jpeg', 1.0);
+      const cardData = canvas.toDataURL('image/jpeg', 0.95);
 
-      pdf.addImage(cardData, 'JPEG', 56, 242, 98, 61);
+      const cardW = 85.6;
+      const cardH = 54;
+      const cardX = (pageW - cardW) / 2;
+      const cardY = 222;
+
+      pdf.setDrawColor(210, 215, 224);
+      pdf.setFillColor(255, 255, 255);
+      pdf.roundedRect(cardX + 2, cardY + 2, cardW, cardH, 3, 3, 'F');
+      pdf.addImage(cardData, 'JPEG', cardX, cardY, cardW, cardH);
 
       pdf.setDrawColor(...navy);
-      pdf.roundedRect(18, 320, 174, 24, 2, 2);
-
-      pdf.setTextColor(30,30,30);
+      pdf.setLineWidth(0.35);
+      pdf.roundedRect(margin, 282, contentW, 11, 1.5, 1.5, 'S');
+      pdf.setTextColor(40, 40, 40);
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(11);
-
+      pdf.setFontSize(7.6);
       const notice = 'Important notice: The International Conception Passport is a symbolic recognition document. It is not an official state passport, legal identity card, birth certificate, travel document, or medical record.';
-
-      pdf.text(pdf.splitTextToSize(notice, 150), 32, 332);
+      pdf.text(pdf.splitTextToSize(notice, contentW - 12), margin + 6, 287);
 
       pdf.save(`International-Conception-Passport-${data.lastName}.pdf`);
     }
@@ -741,16 +752,18 @@
       event.preventDefault();
 
       const data = {
-        firstName: document.getElementById('firstName').value,
-        lastName: document.getElementById('lastName').value,
-        conceptionDate: document.getElementById('conceptionDate').value,
+        firstName: document.getElementById('firstName').value.trim(),
+        lastName: document.getElementById('lastName').value.trim(),
+        conceptionDate: document.getElementById('conceptionDate').value.trim(),
         birthDate: document.getElementById('birthDate').value
       };
 
       confirmation.style.display = 'block';
+      confirmation.textContent = 'Registration request received. Your International Conception Passport PDF is being generated.';
 
       await generatePDF(data);
 
+      confirmation.textContent = 'Your International Conception Passport PDF has been generated and downloaded.';
       form.reset();
       confirmation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
