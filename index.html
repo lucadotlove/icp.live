@@ -442,6 +442,7 @@
       <nav aria-label="Primary navigation">
         <a href="#purpose">Purpose</a>
         <a href="#passport">Passport</a>
+        <a href="#funds">Use of funds</a>
         <a href="#register">Register</a>
         <a class="button" href="#register">Register now</a>
       </nav>
@@ -514,6 +515,26 @@
       </div>
     </section>
 
+    <section id="funds">
+      <div class="container two-col">
+        <div class="section-title">
+          <div class="eyebrow">Use of funds</div>
+          <h2>Supporting the value of life.</h2>
+          <p class="lead">Funds raised through the International Conception Passport initiative may be used to support cultural, educational, legal, and civic work that promotes the recognition, protection, and dignity of unborn lives.</p>
+        </div>
+        <div class="official-panel">
+          <h3>How contributions may be directed</h3>
+          <p>The initiative is designed not only as a symbolic registry, but also as a platform for public awareness and institutional engagement. A portion of funds may support research, communications, advocacy, family-oriented educational materials, and policy dialogue related to the value and protection of human life before birth.</p>
+          <ul>
+            <li>Public education on the dignity and continuity of unborn life.</li>
+            <li>Institutional and civic engagement with decision-makers.</li>
+            <li>Communication projects that strengthen respect for life.</li>
+            <li>Administrative development of the International Conception Passport registry.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
     <section id="register">
       <div class="container two-col">
         <div class="section-title">
@@ -532,6 +553,10 @@
             <div>
               <label for="lastName">Last Name *</label>
               <input id="lastName" name="lastName" type="text" autocomplete="family-name" required />
+            </div>
+            <div>
+              <label for="email">Email *</label>
+              <input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.com" required />
             </div>
             <div>
               <label for="conceptionDate">Date of conception *</label>
@@ -578,6 +603,9 @@
   <script>
     const form = document.getElementById('registrationForm');
     const confirmation = document.getElementById('confirmation');
+
+    // IMPORTANT: after creating the Google Apps Script below, paste your Web App URL here.
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0Z7rsrSDZmh0Jhb4p6ds467lgU61WtDbiXlO8Gbnsrr_0Kz8BU4sjlbLPmyRqHZ6p-Q/exec';
 
     function formatDate(dateString) {
       if (!dateString) return 'Not provided';
@@ -743,7 +771,33 @@
       const notice = 'Important notice: The International Conception Passport is a symbolic recognition document. It is not an official state passport, legal identity card, birth certificate, travel document, or medical record.';
       pdf.text(pdf.splitTextToSize(notice, contentW - 12), margin + 6, 287);
 
-      pdf.save(`International-Conception-Passport-${data.lastName}.pdf`);
+      const fileName = `International-Conception-Passport-${data.lastName}.pdf`;
+      const pdfBase64 = pdf.output('datauristring').split(',')[1];
+      pdf.save(fileName);
+
+      return { fileName, pdfBase64 };
+    }
+
+    async function submitRegistrationToGoogle(data, pdfResult) {
+      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE')) {
+        console.warn('Google Apps Script URL is not configured yet. PDF generated locally only.');
+        return;
+      }
+
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          conceptionDate: data.conceptionDate,
+          birthDate: formatDate(data.birthDate),
+          pdfFileName: pdfResult.fileName,
+          pdfBase64: pdfResult.pdfBase64
+        })
+      });
     }
 
     form.addEventListener('submit', async function(event) {
@@ -752,6 +806,7 @@
       const data = {
         firstName: document.getElementById('firstName').value.trim(),
         lastName: document.getElementById('lastName').value.trim(),
+        email: document.getElementById('email').value.trim(),
         conceptionDate: document.getElementById('conceptionDate').value.trim(),
         birthDate: document.getElementById('birthDate').value
       };
@@ -759,9 +814,10 @@
       confirmation.style.display = 'block';
       confirmation.textContent = 'Registration request received. Your International Conception Passport PDF is being generated.';
 
-      await generatePDF(data);
+      const pdfResult = await generatePDF(data);
+      await submitRegistrationToGoogle(data, pdfResult);
 
-      confirmation.textContent = 'Your International Conception Passport PDF has been generated and downloaded.';
+      confirmation.textContent = 'Your International Conception Passport PDF has been generated and downloaded. A welcome email will also be sent once the registry connection is active.';
       form.reset();
       confirmation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
