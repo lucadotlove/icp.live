@@ -547,17 +547,14 @@
           <p class="small-note">Fields marked with * are required.</p>
           <form id="registrationForm">
             <div>
-              <label for="firstName">Name</label>
+              <label for="firstName">Expected Name</label>
               <input id="firstName" name="firstName" type="text" autocomplete="given-name" placeholder="Optional" />
             </div>
             <div>
-              <label for="lastName">Last Name *</label>
+              <label for="lastName">Expected Last Name *</label>
               <input id="lastName" name="lastName" type="text" autocomplete="family-name" required />
             </div>
-            <div>
-              <label for="email">Email *</label>
-              <input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.com" required />
-            </div>
+            
             <div>
               <label for="conceptionDate">Date of conception *</label>
               <input id="conceptionDate" name="conceptionDate" type="text" placeholder="e.g. 14 January 2024 or January 2024" required style="min-height:56px;font-size:18px;" />
@@ -565,6 +562,10 @@
             <div>
               <label for="birthDate">Estimated date of birth</label>
               <input id="birthDate" name="birthDate" type="date" />
+            </div>
+            <div>
+              <label for="email">Your email *</label>
+              <input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.com" required />
             </div>
             <button class="button" type="submit">Submit registration request</button>
           </form>
