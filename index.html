@@ -419,6 +419,28 @@
       align-items: center;
     }
 
+    .loading-spinner {
+      width: 44px;
+      height: 44px;
+      border: 4px solid #d8dee8;
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 6px 0 18px;
+    }
+
+    .download-modal.is-ready .loading-spinner {
+      display: none;
+    }
+
+    .download-modal.is-loading #downloadPdfButton {
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     .modal-close {
       border: 1px solid var(--line);
       background: var(--white);
@@ -638,10 +660,11 @@
 
   <div class="download-modal" id="downloadModal" aria-hidden="true">
     <div class="download-dialog" role="dialog" aria-modal="true" aria-labelledby="downloadTitle">
-      <div class="eyebrow">Registration complete</div>
-      <h3 id="downloadTitle">Your International Conception Passport has been created.</h3>
-      <p>Your welcome letter and personalized International Conception Passport are now ready.</p>
-      <div class="modal-note">Please download and keep this document as a formal family record. A copy will also be sent to the email address provided in the registration form.</div>
+      <div class="eyebrow" id="modalEyebrow">Registration in progress</div>
+      <h3 id="downloadTitle">Creating your International Conception Passport.</h3>
+      <div class="loading-spinner" id="loadingSpinner" aria-label="Loading"></div>
+      <p id="modalMessage">Please wait while your welcome letter and personalized passport are being generated.</p>
+      <div class="modal-note" id="modalNote">This usually takes only a few seconds. Please keep this window open.</div>
       <div class="modal-actions">
         <button class="button" id="downloadPdfButton" type="button">Download your passport PDF</button>
         <button class="button secondary modal-close" id="closeModalButton" type="button">Close</button>
@@ -682,6 +705,10 @@
     const downloadModal = document.getElementById('downloadModal');
     const downloadPdfButton = document.getElementById('downloadPdfButton');
     const closeModalButton = document.getElementById('closeModalButton');
+    const modalEyebrow = document.getElementById('modalEyebrow');
+    const downloadTitle = document.getElementById('downloadTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalNote = document.getElementById('modalNote');
     let latestPdfResult = null;
 
     // IMPORTANT: after creating the Google Apps Script below, paste your Web App URL here.
@@ -704,6 +731,26 @@
         img.onerror = reject;
         img.src = src;
       });
+    }
+
+    function openModalLoading() {
+      latestPdfResult = null;
+      downloadModal.classList.add('is-visible', 'is-loading');
+      downloadModal.classList.remove('is-ready');
+      downloadModal.setAttribute('aria-hidden', 'false');
+      modalEyebrow.textContent = 'Registration in progress';
+      downloadTitle.textContent = 'Creating your International Conception Passport.';
+      modalMessage.textContent = 'Please wait while your welcome letter and personalized passport are being generated.';
+      modalNote.textContent = 'This usually takes only a few seconds. Please keep this window open.';
+    }
+
+    function setModalReady() {
+      downloadModal.classList.remove('is-loading');
+      downloadModal.classList.add('is-ready');
+      modalEyebrow.textContent = 'Registration complete';
+      downloadTitle.textContent = 'Your International Conception Passport has been created.';
+      modalMessage.textContent = 'Your welcome letter and personalized International Conception Passport are now ready.';
+      modalNote.textContent = 'Please download and keep this document as a formal family record. A copy will also be sent to the email address provided in the registration form.';
     }
 
     async function generatePDF(data) {
@@ -891,16 +938,16 @@
 
       confirmation.style.display = 'block';
       confirmation.textContent = 'Registration request received. Your International Conception Passport PDF is being generated.';
+      openModalLoading();
 
       const pdfResult = await generatePDF(data);
       latestPdfResult = pdfResult;
       await submitRegistrationToGoogle(data, pdfResult);
 
+      setModalReady();
       confirmation.textContent = 'Your International Conception Passport PDF has been created. Please use the download button in the confirmation window.';
       form.reset();
       confirmation.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      downloadModal.classList.add('is-visible');
-      downloadModal.setAttribute('aria-hidden', 'false');
     });
 
     downloadPdfButton.addEventListener('click', function() {
