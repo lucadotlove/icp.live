@@ -677,8 +677,7 @@
       pdf.setTextColor(...navy);
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(13);
-      const familyName = `${data.firstName || ''} ${data.lastName}`.trim();
-      pdf.text(`To the family of ${familyName},`, margin, 76);
+      pdf.text(`To the ${data.lastName} family,`, margin, 76);
 
       pdf.setTextColor(25, 25, 25);
       pdf.setFont('helvetica', 'normal');
