@@ -433,8 +433,20 @@
       display: none;
     }
 
-    .download-modal.is-loading #downloadPdfButton {
+    .download-modal.is-loading #downloadPdfButton,
+    .download-modal.is-loading #donationButton {
       display: none;
+    }
+
+    .donation-button {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--white);
+    }
+
+    .donation-button:hover {
+      background: #92712f;
+      border-color: #92712f;
     }
 
     @keyframes spin {
@@ -667,6 +679,7 @@
       <div class="modal-note" id="modalNote">This usually takes only a few seconds. Please keep this window open.</div>
       <div class="modal-actions">
         <button class="button" id="downloadPdfButton" type="button">Download your passport PDF</button>
+        <a class="button donation-button" id="donationButton" href="https://buy.stripe.com/8x27sLcmL7xZ3q90uCc7u00" target="_blank" rel="noopener">Make a donation</a>
         <button class="button secondary modal-close" id="closeModalButton" type="button">Close</button>
       </div>
     </div>
@@ -705,6 +718,7 @@
     const downloadModal = document.getElementById('downloadModal');
     const downloadPdfButton = document.getElementById('downloadPdfButton');
     const closeModalButton = document.getElementById('closeModalButton');
+    const donationButton = document.getElementById('donationButton');
     const modalEyebrow = document.getElementById('modalEyebrow');
     const downloadTitle = document.getElementById('downloadTitle');
     const modalMessage = document.getElementById('modalMessage');
@@ -713,6 +727,7 @@
 
     // IMPORTANT: after creating the Google Apps Script below, paste your Web App URL here.
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz0Z7rsrSDZmh0Jhb4p6ds467lgU61WtDbiXlO8Gbnsrr_0Kz8BU4sjlbLPmyRqHZ6p-Q/exec';
+    const DONATION_URL = 'https://buy.stripe.com/8x27sLcmL7xZ3q90uCc7u00';
 
     function formatDate(dateString) {
       if (!dateString) return 'Not provided';
@@ -750,7 +765,8 @@
       modalEyebrow.textContent = 'Registration complete';
       downloadTitle.textContent = 'Your International Conception Passport has been created.';
       modalMessage.textContent = 'Your welcome letter and personalized International Conception Passport are now ready.';
-      modalNote.textContent = 'Please download and keep this document as a formal family record. A copy will also be sent to the email address provided in the registration form.';
+      modalNote.textContent = 'Please download and keep this document as a formal family record. A copy will also be sent to the email address provided in the registration form. If you wish, you may also support the initiative with a donation of your choice. Suggested average donation: $10.';
+      donationButton.href = DONATION_URL;
     }
 
     async function generatePDF(data) {
